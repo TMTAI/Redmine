@@ -95,9 +95,22 @@ def aggregate_entries(
     under_hours_rows = []
 
     for (date, user), total in sorted(user_hours.items()):
-        required = required_hours.get(user, min_hours_per_day)
+        base_required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
 
-        if total < required:
+        leave_hours = user_leaves.get(
+            (date, user),
+            0
+        )
+
+        required = max(
+            0,
+            base_required - leave_hours
+        )
+
+        if required > 0 and total < required:
             under_hours_rows.append([
                 date,
                 user,
@@ -109,10 +122,24 @@ def aggregate_entries(
     no_log_rows = []
 
     for user in sorted(mapped_users):
-        required = required_hours.get(user, min_hours_per_day)
+        base_required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
 
         for date in working_days:
-            if (date, user) in user_leaves:
+            leave_hours = user_leaves.get(
+                (date, user),
+                0
+            )
+
+            required = max(
+                0,
+                base_required - leave_hours
+            )
+
+            # Nghỉ đủ cả ngày, không cần log
+            if required <= 0:
                 continue
 
             if (date, user) not in user_hours:
