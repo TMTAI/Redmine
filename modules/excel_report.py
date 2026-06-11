@@ -2,117 +2,13 @@ import os
 from datetime import datetime
 
 from openpyxl import Workbook
-from openpyxl.styles import Font, Border, Side, PatternFill, Alignment
 
-
-# ==============================
-# Excel Styles
-# ==============================
-
-THIN_BORDER = Border(
-    left=Side(style="thin"),
-    right=Side(style="thin"),
-    top=Side(style="thin"),
-    bottom=Side(style="thin")
+from modules.excel_style import (
+    apply_common_style,
+    apply_dashboard_status_style,
+    apply_penalty_status_style,
+    apply_group_by_date_style
 )
-
-HEADER_FILL = PatternFill(
-    fill_type="solid",
-    fgColor="4472C4"
-)
-
-HEADER_FONT = Font(
-    bold=True,
-    color="FFFFFF"
-)
-
-OK_FILL = PatternFill(
-    fill_type="solid",
-    fgColor="C6EFCE"
-)
-
-WARNING_FILL = PatternFill(
-    fill_type="solid",
-    fgColor="FFEB9C"
-)
-
-CRITICAL_FILL = PatternFill(
-    fill_type="solid",
-    fgColor="FFC7CE"
-)
-
-
-def auto_fit(ws):
-    for column in ws.columns:
-        max_length = 0
-        column_letter = column[0].column_letter
-
-        for cell in column:
-            value = "" if cell.value is None else str(cell.value)
-            max_length = max(max_length, len(value))
-
-        ws.column_dimensions[column_letter].width = max_length + 2
-
-
-def apply_common_style(ws):
-    if ws.max_row < 1:
-        return
-
-    # Header style
-    for cell in ws[1]:
-        cell.font = HEADER_FONT
-        cell.fill = HEADER_FILL
-        cell.alignment = Alignment(horizontal="center")
-
-    # Border for all cells
-    for row in ws.iter_rows():
-        for cell in row:
-            cell.border = THIN_BORDER
-            cell.alignment = Alignment(vertical="center")
-
-    # Freeze header
-    ws.freeze_panes = "A2"
-
-    # Auto filter
-    ws.auto_filter.ref = ws.dimensions
-
-    auto_fit(ws)
-
-
-def apply_dashboard_status_style(ws):
-    """
-    DASHBOARD columns:
-    1 #
-    2 User
-    3 Missing Hours
-    4 Missing Days
-    5 Logged Days
-    6 Total Hours
-    7 Required Hours/Day
-    8 Working Days
-    9 Expected Hours
-    10 Missing %
-    11 Status
-    """
-
-    status_col = 11
-
-    if ws.max_row < 2:
-        return
-
-    for row in ws.iter_rows(min_row=2):
-        status_cell = row[status_col - 1]
-        status = status_cell.value
-
-        if status == "OK":
-            status_cell.fill = OK_FILL
-
-        elif status == "Warning":
-            status_cell.fill = WARNING_FILL
-
-        elif status == "Critical":
-            status_cell.fill = CRITICAL_FILL
-
 
 def create_sheet(wb, title, headers, rows):
     ws = wb.create_sheet(title)
@@ -124,8 +20,19 @@ def create_sheet(wb, title, headers, rows):
 
     apply_common_style(ws)
 
+    if title in [
+        "DETAIL",
+        "UNDER_HOURS",
+        "NO_LOG",
+        "PENALTY_REPORT"
+    ]:
+        apply_group_by_date_style(ws, date_col=1)
+
     if title == "DASHBOARD":
         apply_dashboard_status_style(ws)
+
+    elif title == "PENALTY_REPORT":
+        apply_penalty_status_style(ws)
 
     return ws
 
@@ -218,12 +125,30 @@ def generate_excel(
 
     create_sheet(
         wb,
+        "PENALTY_REPORT",
+        [
+            "Ngày",
+            "Thành viên",
+            "Vi phạm",
+            "Tiền phạt",
+            "Trạng thái",
+            "Ghi nhận",
+            "Đồng tiền",
+            "Ghi chú"
+        ],
+        result["penalty_rows"]
+    )
+
+    create_sheet(
+        wb,
         "DETAIL",
         [
             "Date",
             "User",
             "Redmine",
             "Project",
+            "Issue ID",
+            "Issue URL",
             "Hours"
         ],
         result["detail_rows"]

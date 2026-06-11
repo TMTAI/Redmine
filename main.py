@@ -2,6 +2,9 @@ from modules.config_loader import load_config
 from modules.mapping_loader import load_user_mapping
 from modules.holiday_loader import load_holidays
 from modules.leave_loader import load_user_leaves
+from modules.penalty_loader import load_penalty_rules
+from modules.late_loader import load_late_logs
+from modules.penalty_payment_loader import load_penalty_payments
 
 from modules.redmine_client import (
     get_all_time_entries
@@ -85,6 +88,26 @@ def main():
         f"{len(user_leaves)}"
     )
 
+    late_logs = load_late_logs()
+
+    print(
+        f"Late Logs: {len(late_logs)}"
+    )
+
+    penalty_rules = load_penalty_rules()
+
+    print(
+        f"Penalty Rules: "
+        f"{len(penalty_rules)}"
+    )
+
+    penalty_payments = load_penalty_payments()
+
+    print(
+        f"Penalty Payments: "
+        f"{len(penalty_payments)}"
+    )
+
     all_entries = []
 
     if data_source == "redmine":
@@ -110,10 +133,8 @@ def main():
             )
 
             for entry in entries:
-
-                entry["_redmine_name"] = (
-                    redmine["name"]
-                )
+                entry["_redmine_name"] = redmine["name"]
+                entry["_redmine_url"] = redmine["url"].rstrip("/")
 
             print(
                 f"Loaded "
@@ -170,6 +191,9 @@ def main():
         required_hours=required_hours,
         holidays=holidays,
         user_leaves=user_leaves,
+        late_logs=late_logs,
+        penalty_rules=penalty_rules,
+        penalty_payments=penalty_payments,
         min_hours_per_day=min_hours_per_day,
         from_date=from_date,
         to_date=to_date,

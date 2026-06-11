@@ -1,0 +1,4 @@
+Code,Source,Violation,Amount,DefaultStatus,RecordType,Currency,Note,Enabled
+NO_LOG,NO_LOG,Không log spent time hoặc Log spend time không đầy đủ hoặc không log timesheet,10000,Chưa đóng,Lần đầu,VND,Không log spend time,Y
+UNDER_HOURS,UNDER_HOURS,Không log spent time hoặc Log spend time không đầy đủ hoặc không log timesheet,10000,Chưa đóng,Lần đầu,VND,Log thiếu giờ,Y
+LATE,LATE,Đi trễ,10000,Chưa đóng,Lần đầu,VND,Đi trễ,Y
