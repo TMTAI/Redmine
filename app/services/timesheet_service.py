@@ -1,0 +1,444 @@
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+from app.services.dashboard_service import build_dashboard_rows
+from app.services.penalty_service import build_penalty_rows
+
+
+def build_working_days(from_date, to_date, holidays):
+    working_days = []
+
+    current = datetime.strptime(from_date, "%Y-%m-%d")
+    end_date = datetime.strptime(to_date, "%Y-%m-%d")
+
+    while current <= end_date:
+        date_str = current.strftime("%Y-%m-%d")
+
+        if current.weekday() < 5 and date_str not in holidays:
+            working_days.append(date_str)
+
+        current += timedelta(days=1)
+
+    return working_days
+
+
+def build_detail_result(
+    all_entries,
+    user_mapping,
+    default_redmine
+):
+    detail_rows = []
+
+    user_hours = defaultdict(float)
+    summary_hours = defaultdict(float)
+    summary_days = defaultdict(set)
+
+    users_found = set()
+    user_redmine = {}
+
+    for item in all_entries:
+        try:
+            date = item["spent_on"]
+            redmine_name = item.get(
+                "_redmine_name",
+                default_redmine
+            )
+
+            project = item.get(
+                "project",
+                {}
+            ).get(
+                "name",
+                ""
+            )
+
+            user_name = item.get(
+                "user",
+                {}
+            ).get(
+                "name",
+                ""
+            )
+
+            hours = float(
+                item.get(
+                    "hours",
+                    0
+                )
+            )
+
+            issue = item.get(
+                "issue",
+                {}
+            )
+
+            issue_id = issue.get(
+                "id",
+                ""
+            )
+
+            issue_url = ""
+
+            redmine_url = item.get(
+                "_redmine_url",
+                ""
+            )
+
+            if issue_id and redmine_url:
+                issue_url = (
+                    f"{redmine_url}/issues/{issue_id}"
+                )
+
+            user_key = (
+                user_name
+                .strip()
+                .lower()
+            )
+
+            standard_user = user_mapping.get(
+                user_key
+            )
+
+            if standard_user is None:
+                continue
+
+            users_found.add(
+                standard_user
+            )
+
+            if standard_user not in user_redmine:
+                user_redmine[
+                    standard_user
+                ] = redmine_name
+
+            detail_rows.append([
+                date,
+                standard_user,
+                redmine_name,
+                project,
+                issue_id,
+                issue_url,
+                hours
+            ])
+
+            user_hours[
+                (
+                    date,
+                    standard_user
+                )
+            ] += hours
+
+            summary_hours[
+                standard_user
+            ] += hours
+
+            summary_days[
+                standard_user
+            ].add(date)
+
+        except Exception as ex:
+            print("ERROR while building detail result:")
+            print(item)
+            print(ex)
+
+    detail_rows = sorted(
+        detail_rows,
+        key=lambda row: (
+            row[0],  # Date
+            row[1],  # User
+            row[3],  # Project
+            row[4]   # Issue ID
+        )
+    )
+
+    return {
+        "detail_rows": detail_rows,
+        "user_hours": user_hours,
+        "summary_hours": summary_hours,
+        "summary_days": summary_days,
+        "users_found": users_found,
+        "user_redmine": user_redmine
+    }
+
+
+def build_under_hours_rows(
+    user_hours,
+    required_hours,
+    user_leaves,
+    min_hours_per_day
+):
+    under_hours_rows = []
+
+    for (date, user), total in sorted(
+        user_hours.items()
+    ):
+        base_required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
+
+        leave_hours = user_leaves.get(
+            (
+                date,
+                user
+            ),
+            0
+        )
+
+        required = max(
+            0,
+            base_required - leave_hours
+        )
+
+        if required > 0 and total < required:
+            under_hours_rows.append([
+                date,
+                user,
+                round(total, 2),
+                round(required - total, 2),
+                required
+            ])
+
+    return under_hours_rows
+
+
+def build_no_log_rows(
+    mapped_users,
+    user_hours,
+    required_hours,
+    user_leaves,
+    user_redmine,
+    working_days,
+    default_redmine,
+    min_hours_per_day
+):
+    no_log_rows = []
+
+    for user in sorted(mapped_users):
+        base_required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
+
+        for date in working_days:
+            leave_hours = user_leaves.get(
+                (
+                    date,
+                    user
+                ),
+                0
+            )
+
+            required = max(
+                0,
+                base_required - leave_hours
+            )
+
+            if required <= 0:
+                continue
+
+            if (date, user) not in user_hours:
+                no_log_rows.append([
+                    date,
+                    user,
+                    user_redmine.get(
+                        user,
+                        default_redmine
+                    ),
+                    required
+                ])
+
+    return no_log_rows
+
+
+def build_summary_rows(
+    mapped_users,
+    summary_hours,
+    summary_days,
+    required_hours,
+    min_hours_per_day
+):
+    summary_rows = []
+
+    for user in sorted(mapped_users):
+        summary_rows.append([
+            user,
+            len(
+                summary_days[user]
+            ),
+            round(
+                summary_hours[user],
+                2
+            ),
+            required_hours.get(
+                user,
+                min_hours_per_day
+            )
+        ])
+
+    return summary_rows
+
+
+def build_missing_summary(
+    under_hours_rows,
+    no_log_rows
+):
+    missing_summary = defaultdict(
+        lambda: {
+            "days": 0,
+            "hours": 0.0
+        }
+    )
+
+    for row in under_hours_rows:
+        user = row[1]
+        missing = row[3]
+
+        missing_summary[user]["days"] += 1
+        missing_summary[user]["hours"] += missing
+
+    for row in no_log_rows:
+        user = row[1]
+        required = row[3]
+
+        missing_summary[user]["days"] += 1
+        missing_summary[user]["hours"] += required
+
+    missing_summary_rows = []
+
+    for user in sorted(
+        missing_summary.keys()
+    ):
+        missing_summary_rows.append([
+            user,
+            missing_summary[user]["days"],
+            round(
+                missing_summary[user]["hours"],
+                2
+            )
+        ])
+
+    return (
+        missing_summary,
+        missing_summary_rows
+    )
+
+
+def aggregate_entries(
+    all_entries,
+    user_mapping,
+    mapped_users,
+    required_hours,
+    holidays,
+    user_leaves,
+    late_logs,
+    penalty_rules,
+    penalty_payments,
+    min_hours_per_day,
+    from_date,
+    to_date,
+    default_redmine
+):
+    working_days = build_working_days(
+        from_date=from_date,
+        to_date=to_date,
+        holidays=holidays
+    )
+
+    working_days_count = len(
+        working_days
+    )
+
+    detail_result = build_detail_result(
+        all_entries=all_entries,
+        user_mapping=user_mapping,
+        default_redmine=default_redmine
+    )
+
+    detail_rows = detail_result[
+        "detail_rows"
+    ]
+
+    user_hours = detail_result[
+        "user_hours"
+    ]
+
+    summary_hours = detail_result[
+        "summary_hours"
+    ]
+
+    summary_days = detail_result[
+        "summary_days"
+    ]
+
+    users_found = detail_result[
+        "users_found"
+    ]
+
+    user_redmine = detail_result[
+        "user_redmine"
+    ]
+
+    under_hours_rows = build_under_hours_rows(
+        user_hours=user_hours,
+        required_hours=required_hours,
+        user_leaves=user_leaves,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    no_log_rows = build_no_log_rows(
+        mapped_users=mapped_users,
+        user_hours=user_hours,
+        required_hours=required_hours,
+        user_leaves=user_leaves,
+        user_redmine=user_redmine,
+        working_days=working_days,
+        default_redmine=default_redmine,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    summary_rows = build_summary_rows(
+        mapped_users=mapped_users,
+        summary_hours=summary_hours,
+        summary_days=summary_days,
+        required_hours=required_hours,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    (
+        missing_summary,
+        missing_summary_rows
+    ) = build_missing_summary(
+        under_hours_rows=under_hours_rows,
+        no_log_rows=no_log_rows
+    )
+
+    dashboard_rows = build_dashboard_rows(
+        mapped_users=mapped_users,
+        required_hours=required_hours,
+        summary_hours=summary_hours,
+        summary_days=summary_days,
+        missing_summary=missing_summary,
+        working_days_count=working_days_count,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    penalty_rows = build_penalty_rows(
+        under_hours_rows=under_hours_rows,
+        no_log_rows=no_log_rows,
+        late_logs=late_logs,
+        penalty_rules=penalty_rules,
+        penalty_payments=penalty_payments
+    )
+
+    return {
+        "detail_rows": detail_rows,
+        "under_hours_rows": under_hours_rows,
+        "no_log_rows": no_log_rows,
+        "summary_rows": summary_rows,
+        "missing_summary_rows": missing_summary_rows,
+        "dashboard_rows": dashboard_rows,
+        "users_found": users_found,
+        "working_days_count": working_days_count,
+        "penalty_rows": penalty_rows
+    }

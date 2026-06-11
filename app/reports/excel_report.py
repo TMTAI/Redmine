@@ -3,7 +3,7 @@ from datetime import datetime
 
 from openpyxl import Workbook
 
-from modules.excel_style import (
+from app.reports.excel_style import (
     apply_common_style,
     apply_dashboard_status_style,
     apply_penalty_status_style,

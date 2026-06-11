@@ -1,24 +1,24 @@
-from modules.config_loader import load_config
-from modules.mapping_loader import load_user_mapping
-from modules.holiday_loader import load_holidays
-from modules.leave_loader import load_user_leaves
-from modules.penalty_loader import load_penalty_rules
-from modules.late_loader import load_late_logs
-from modules.penalty_payment_loader import load_penalty_payments
+from app.loaders.config_loader import load_config
+from app.loaders.mapping_loader import load_user_mapping
+from app.loaders.holiday_loader import load_holidays
+from app.loaders.leave_loader import load_user_leaves
+from app.loaders.penalty_loader import load_penalty_rules
+from app.loaders.late_loader import load_late_logs
+from app.loaders.penalty_payment_loader import load_penalty_payments
 
-from modules.redmine_client import (
+from app.clients.redmine_client import (
     get_all_time_entries
 )
 
-from modules.csv_client import (
+from app.clients.csv_client import (
     get_all_time_entries_from_csv
 )
 
-from modules.timesheet_service import (
+from app.services.timesheet_service import (
     aggregate_entries
 )
 
-from modules.excel_report import (
+from app.reports.excel_report import (
     generate_excel
 )
 

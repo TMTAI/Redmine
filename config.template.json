@@ -1,0 +1,17 @@
+{
+  "data_source": "redmine",
+  "local_csv": {
+    "input_folder": "input"
+  },
+  "redmines": [
+    {
+      "name": "REDMINE",
+      "url": "https://redmine.company.com",
+      "api_key": "YOUR_API_KEY"
+    }
+  ],
+  "report": {
+    "from_date": "2026-01-01",
+    "min_hours_per_day": 8
+  }
+}
