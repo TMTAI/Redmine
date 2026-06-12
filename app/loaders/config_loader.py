@@ -13,6 +13,12 @@ def load_config():
 
     report = config["report"]
 
+    toDate = report["to_date"]
+    if toDate == "today":
+        toDate = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+    else:
+        toDate = report["to_date"]
+
     return {
         "data_source": config.get(
             "data_source",
@@ -29,7 +35,7 @@ def load_config():
             }
         ),
         "from_date": report["from_date"],
-        "to_date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"),
+        "to_date": toDate,
         "min_hours_per_day": report.get(
             "min_hours_per_day",
             8
