@@ -2,6 +2,8 @@ from app.loaders.config_loader import load_config
 from app.loaders.mapping_loader import load_user_mapping
 from app.loaders.holiday_loader import load_holidays
 from app.loaders.leave_loader import load_user_leaves
+from app.loaders.leave_excel_loader import load_user_leaves_from_excel
+from app.services.leave_service import merge_user_leaves
 from app.loaders.penalty_loader import load_penalty_rules
 from app.loaders.late_loader import load_late_logs
 from app.loaders.penalty_payment_loader import load_penalty_payments
@@ -81,12 +83,31 @@ def main():
         f"{len(holidays)}"
     )
 
-    user_leaves = load_user_leaves()
+    leaves_config = config.get("leaves", {})
 
-    print(
-        f"User Leaves: "
-        f"{len(user_leaves)}"
+    leave_source = leaves_config.get("source", "csv")
+
+    csv_leaves = {}
+    excel_leaves = {}
+
+    if leave_source in ["csv", "both"]:
+        csv_leaves = load_user_leaves()
+
+    if leave_source in ["excel", "both"]:
+        excel_leaves = load_user_leaves_from_excel(
+            leaves_config=leaves_config,
+            user_mapping=user_mapping
+        )
+
+    user_leaves = merge_user_leaves(
+        base_leaves=excel_leaves,
+        extra_leaves=csv_leaves,
+        required_hours=required_hours
     )
+
+    print(f"CSV Leaves: {len(csv_leaves)}")
+    print(f"Excel Leaves: {len(excel_leaves)}")
+    print(f"User Leaves Merged: {len(user_leaves)}")
 
     late_logs = load_late_logs()
 

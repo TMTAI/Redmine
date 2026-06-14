@@ -24,6 +24,7 @@ def load_config():
             "data_source",
             "redmine"
         ),
+        "leaves": config.get("leaves"),
         "redmines": config.get(
             "redmines",
             []

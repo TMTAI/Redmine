@@ -3,6 +3,26 @@
   "local_csv": {
     "input_folder": "input"
   },
+  "leaves": {
+    "source": "both",
+
+    "excel": {
+      "input_folder": "resources/leave_exports",
+      "file_pattern": "LeaveRequest*.xlsx"
+    },
+
+    "approval": {
+      "type": "approver_and_approved_date"
+    },
+
+    "working_hours_per_day": 8,
+
+    "session_mapping": {
+      "Cả ngày": 8,
+      "Buổi sáng": 4,
+      "Buổi chiều": 4
+    }
+  },
   "redmines": [
     {
       "name": "REDMINE",
