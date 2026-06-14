@@ -108,13 +108,14 @@ def generate_excel(
         wb,
         "DASHBOARD",
         [
-            "Rank",
+            "#",
             "User",
             "Missing Hours",
             "Missing Days",
             "Logged Days",
+            "Leave Days",
             "Total Hours",
-            "Required Hours/Day",
+            "Required Hours",
             "Working Days",
             "Expected Hours",
             "Missing %",
@@ -165,6 +166,19 @@ def generate_excel(
             "Required Hours"
         ],
         result["under_hours_rows"]
+    )
+
+    create_sheet(
+        wb,
+        "OVER_HOURS",
+        [
+            "Date",
+            "User",
+            "Total Hours",
+            "Required Hours",
+            "Over Hours"
+        ],
+        result["over_hours_rows"]
     )
 
     create_sheet(

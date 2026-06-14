@@ -103,7 +103,7 @@ def apply_common_style(ws):
 
 
 def apply_dashboard_status_style(ws):
-    status_col = 11
+    status_col = 12
 
     if ws.max_row < 2:
         return

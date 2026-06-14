@@ -323,6 +323,62 @@ def build_missing_summary(
         missing_summary_rows
     )
 
+def build_leave_summary(
+    mapped_users,
+    user_leaves
+):
+    leave_summary = {}
+
+    for user in mapped_users:
+        leave_summary[user] = 0
+
+    for (date, user), leave_hours in user_leaves.items():
+
+        if user not in leave_summary:
+            leave_summary[user] = 0
+
+        leave_summary[user] += (
+            leave_hours / 8
+        )
+
+    return leave_summary
+
+def build_over_hours_rows(
+    user_hours,
+    required_hours,
+    user_leaves,
+    min_hours_per_day
+):
+    over_hours_rows = []
+
+    for (date, user), total in sorted(
+        user_hours.items()
+    ):
+        base_required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
+
+        leave_hours = user_leaves.get(
+            (date, user),
+            0
+        )
+
+        required = max(
+            0,
+            base_required - leave_hours
+        )
+
+        if required > 0 and total > required:
+            over_hours_rows.append([
+                date,
+                user,
+                round(total, 2),
+                round(required, 2),
+                round(total - required, 2)
+            ])
+
+    return over_hours_rows
 
 def aggregate_entries(
     all_entries,
@@ -386,6 +442,13 @@ def aggregate_entries(
         min_hours_per_day=min_hours_per_day
     )
 
+    over_hours_rows = build_over_hours_rows(
+        user_hours=user_hours,
+        required_hours=required_hours,
+        user_leaves=user_leaves,
+        min_hours_per_day=min_hours_per_day
+    )
+
     no_log_rows = build_no_log_rows(
         mapped_users=mapped_users,
         user_hours=user_hours,
@@ -413,12 +476,18 @@ def aggregate_entries(
         no_log_rows=no_log_rows
     )
 
+    leave_summary = build_leave_summary(
+        mapped_users=mapped_users,
+        user_leaves=user_leaves
+    )
+
     dashboard_rows = build_dashboard_rows(
         mapped_users=mapped_users,
         required_hours=required_hours,
         summary_hours=summary_hours,
         summary_days=summary_days,
         missing_summary=missing_summary,
+        leave_summary=leave_summary,
         working_days_count=working_days_count,
         min_hours_per_day=min_hours_per_day
     )
@@ -440,5 +509,6 @@ def aggregate_entries(
         "dashboard_rows": dashboard_rows,
         "users_found": users_found,
         "working_days_count": working_days_count,
-        "penalty_rows": penalty_rows
+        "over_hours_rows": over_hours_rows,
+        "penalty_rows": penalty_rows,
     }

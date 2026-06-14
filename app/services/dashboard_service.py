@@ -14,6 +14,7 @@ def build_dashboard_rows(
     summary_hours,
     summary_days,
     missing_summary,
+    leave_summary,
     working_days_count,
     min_hours_per_day
 ):
@@ -42,12 +43,18 @@ def build_dashboard_rows(
                 missing_hours / expected_hours
             ) * 100
 
+        leave_days = round(
+            leave_summary.get(user, 0),
+            1
+        )
+
         dashboard_rows.append([
             0,
             user,
             round(missing_hours, 2),
             missing_days,
             logged_days,
+            leave_days,
             round(total_hours, 2),
             user_required_hours,
             working_days_count,
