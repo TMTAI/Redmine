@@ -37,7 +37,7 @@ def load_penalty_rules():
                 "violation": row.get("Violation", "").strip(),
                 "amount": amount,
                 "default_status": row.get("DefaultStatus", "Chưa đóng").strip(),
-                "record_type": row.get("RecordType", "Lần đầu").strip(),
+                "record_type": row.get("RecordType", "").strip(),
                 "currency": row.get("Currency", "VND").strip(),
                 "note": row.get("Note", "").strip()
             }

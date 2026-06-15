@@ -134,7 +134,7 @@ def generate_excel(
             "Tiền phạt",
             "Trạng thái",
             "Ghi nhận",
-            "Đồng tiền",
+            "Đóng tiền",
             "Ghi chú"
         ],
         result["penalty_rows"]

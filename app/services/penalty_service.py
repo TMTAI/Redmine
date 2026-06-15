@@ -48,6 +48,13 @@ def build_penalty_rows(
         if payment_infos:
             note = f"{note} | " + " | ".join(payment_infos)
 
+        paid_flag = ""
+        if status.upper() in [
+            "ĐÃ ĐÓNG",
+            "DA DONG"
+        ]:
+            paid_flag = "x"
+
         penalty_rows.append([
             date,
             user,
@@ -55,7 +62,7 @@ def build_penalty_rows(
             rule["amount"],
             status,
             rule["record_type"],
-            rule["currency"],
+            paid_flag,
             note
         ])
 
