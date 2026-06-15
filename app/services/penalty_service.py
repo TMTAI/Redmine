@@ -1,3 +1,30 @@
+def normalize_status(status):
+    return str(status or "").strip().upper()
+
+
+def is_paid_status(status):
+    return normalize_status(status) in [
+        "ĐÃ ĐÓNG",
+        "DA DONG"
+    ]
+
+
+def is_closed_status(status):
+    return normalize_status(status) in [
+        "ĐÃ ĐÓNG",
+        "DA DONG",
+        "MIỄN PHẠT",
+        "MIEN PHAT"
+    ]
+
+
+def build_penalty_key(date, user, code):
+    return (
+        f"{date.replace('-', '')}"
+        f"|{user.strip()}"
+        f"|{code.strip().upper()}"
+    )
+
 
 def build_penalty_rows(
     under_hours_rows,
@@ -25,6 +52,8 @@ def build_penalty_rows(
             rule["default_status"]
         )
 
+        paid_flag = "X" if is_paid_status(status) else ""
+
         note = rule["note"]
 
         if extra_note:
@@ -47,13 +76,6 @@ def build_penalty_rows(
 
         if payment_infos:
             note = f"{note} | " + " | ".join(payment_infos)
-
-        paid_flag = ""
-        if status.upper() in [
-            "ĐÃ ĐÓNG",
-            "DA DONG"
-        ]:
-            paid_flag = "x"
 
         penalty_rows.append([
             date,
@@ -99,20 +121,38 @@ def build_penalty_rows(
                 extra_note=f"Trễ {item['late_minutes']} phút"
             )
 
-    penalty_rows = sorted(
+    return sorted(
         penalty_rows,
         key=lambda row: (
-            row[0],  # Ngày
-            row[1],  # Thành viên
-            row[2]   # Vi phạm
+            row[0],
+            row[1],
+            row[2]
         )
     )
 
-    return penalty_rows
 
-def build_penalty_key(date, user, code):
-    return (
-        f"{date.replace('-', '')}"
-        f"|{user}"
-        f"|{code}"
-    )
+def build_penalty_pending_rows(penalty_rows):
+    return [
+        row
+        for row in penalty_rows
+        if not is_closed_status(row[4])
+    ]
+
+
+def build_pending_penalty_summary(penalty_pending_rows):
+    summary = {}
+
+    for row in penalty_pending_rows:
+        user = row[1]
+        amount = row[3]
+
+        if user not in summary:
+            summary[user] = {
+                "count": 0,
+                "amount": 0
+            }
+
+        summary[user]["count"] += 1
+        summary[user]["amount"] += amount
+
+    return summary

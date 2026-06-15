@@ -103,7 +103,7 @@ def apply_common_style(ws):
 
 
 def apply_dashboard_status_style(ws):
-    status_col = 12
+    status_col = 11
 
     if ws.max_row < 2:
         return
@@ -121,6 +121,8 @@ def apply_dashboard_status_style(ws):
         elif status == "Critical":
             status_cell.fill = CRITICAL_FILL
 
+        apply_currency_format(ws, status_col - 2)
+
 def apply_currency_format(ws, column_index):
     """
     Format number:
@@ -133,7 +135,7 @@ def apply_currency_format(ws, column_index):
         return
 
     for row in ws.iter_rows(min_row=2):
-        cell = row[column_index - 1]
+        cell = row[column_index]
 
         if isinstance(
             cell.value,
@@ -141,24 +143,13 @@ def apply_currency_format(ws, column_index):
         ):
             cell.number_format = "#,##0"
 
-def apply_penalty_status_style(ws):
-
-    status_col = 5
-    amount_col = 4
-
-    apply_currency_format(
-        ws,
-        amount_col
-    )
-
+def apply_status_format(ws, column_index):
     if ws.max_row < 2:
         return
 
     for row in ws.iter_rows(min_row=2):
 
-        status_cell = row[
-            status_col - 1
-        ]
+        status_cell = row[column_index]
 
         status = (
             str(status_cell.value)
@@ -186,3 +177,18 @@ def apply_penalty_status_style(ws):
         ]:
 
             status_cell.fill = WARNING_FILL
+
+def apply_penalty_status_style(ws):
+    amount_col = 4
+    apply_currency_format(ws, amount_col - 1)
+
+    status_col = 5
+    apply_status_format(ws, status_col - 1)
+
+
+def apply_penalty_pending_style(ws):
+    amount_col = 4
+    apply_currency_format(ws, amount_col - 1)
+
+    status_col = 5
+    apply_status_format(ws, status_col - 1)

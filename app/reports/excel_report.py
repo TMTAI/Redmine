@@ -7,7 +7,8 @@ from app.reports.excel_style import (
     apply_common_style,
     apply_dashboard_status_style,
     apply_penalty_status_style,
-    apply_group_by_date_style
+    apply_group_by_date_style,
+    apply_penalty_pending_style
 )
 
 def create_sheet(wb, title, headers, rows):
@@ -33,6 +34,9 @@ def create_sheet(wb, title, headers, rows):
 
     elif title == "PENALTY_REPORT":
         apply_penalty_status_style(ws)
+
+    elif title == "PENALTY_PENDING":
+        apply_penalty_pending_style(ws)
 
     return ws
 
@@ -110,18 +114,33 @@ def generate_excel(
         [
             "#",
             "User",
-            "Missing Hours",
-            "Missing Days",
-            "Logged Days",
             "Leave Days",
+            "Logged Days",
             "Total Hours",
-            "Required Hours",
-            "Working Days",
-            "Expected Hours",
-            "Missing %",
+            "Historical No Log",
+            "Historical Under Hours",
+            "Historical Late",
+            "Pending Penalty Count",
+            "Pending Penalty Amount",
             "Status"
         ],
         result["dashboard_rows"]
+    )
+
+    create_sheet(
+        wb,
+        "PENALTY_PENDING",
+        [
+            "Ngày",
+            "Thành viên",
+            "Vi phạm",
+            "Tiền phạt",
+            "Trạng thái",
+            "Ghi nhận",
+            "Đóng tiền",
+            "Ghi chú"
+        ],
+        result["penalty_pending_rows"]
     )
 
     create_sheet(

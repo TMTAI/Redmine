@@ -2,8 +2,8 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 
 from app.services.dashboard_service import build_dashboard_rows
-from app.services.penalty_service import build_penalty_rows
-
+from app.services.penalty_service import (build_penalty_rows, build_penalty_pending_rows, build_pending_penalty_summary)
+from app.services.dashboard_service import build_dashboard_rows
 
 def build_working_days(from_date, to_date, holidays):
     working_days = []
@@ -380,6 +380,33 @@ def build_over_hours_rows(
 
     return over_hours_rows
 
+def build_leave_summary(
+    mapped_users,
+    user_leaves,
+    required_hours,
+    min_hours_per_day
+):
+    leave_summary = {
+        user: 0
+        for user in mapped_users
+    }
+
+    for (date, user), leave_hours in user_leaves.items():
+        required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
+
+        if required <= 0:
+            continue
+
+        leave_summary[user] = (
+            leave_summary.get(user, 0)
+            + leave_hours / required
+        )
+
+    return leave_summary
+
 def aggregate_entries(
     all_entries,
     user_mapping,
@@ -476,28 +503,38 @@ def aggregate_entries(
         no_log_rows=no_log_rows
     )
 
-    leave_summary = build_leave_summary(
-        mapped_users=mapped_users,
-        user_leaves=user_leaves
-    )
-
-    dashboard_rows = build_dashboard_rows(
-        mapped_users=mapped_users,
-        required_hours=required_hours,
-        summary_hours=summary_hours,
-        summary_days=summary_days,
-        missing_summary=missing_summary,
-        leave_summary=leave_summary,
-        working_days_count=working_days_count,
-        min_hours_per_day=min_hours_per_day
-    )
-
     penalty_rows = build_penalty_rows(
         under_hours_rows=under_hours_rows,
         no_log_rows=no_log_rows,
         late_logs=late_logs,
         penalty_rules=penalty_rules,
         penalty_payments=penalty_payments
+    )
+
+    penalty_pending_rows = build_penalty_pending_rows(
+        penalty_rows
+    )
+
+    penalty_pending_summary = build_pending_penalty_summary(
+        penalty_pending_rows
+    )
+
+    leave_summary = build_leave_summary(
+        mapped_users=mapped_users,
+        user_leaves=user_leaves,
+        required_hours=required_hours,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    dashboard_rows = build_dashboard_rows(
+        mapped_users=mapped_users,
+        leave_summary=leave_summary,
+        summary_hours=summary_hours,
+        summary_days=summary_days,
+        no_log_rows=no_log_rows,
+        under_hours_rows=under_hours_rows,
+        late_logs=late_logs,
+        penalty_pending_summary=penalty_pending_summary
     )
 
     return {
@@ -511,4 +548,5 @@ def aggregate_entries(
         "working_days_count": working_days_count,
         "over_hours_rows": over_hours_rows,
         "penalty_rows": penalty_rows,
+        "penalty_pending_rows": penalty_pending_rows,
     }
