@@ -45,6 +45,9 @@ def load_penalty_payments():
                 paid_amount = 0
 
             payments[penalty_key] = {
+                "date": date,
+                "user": user,
+                "code": code,
                 "status": row.get("Status", "").strip(),
                 "paid_amount": paid_amount,
                 "paid_date": row.get("PaidDate", "").strip(),

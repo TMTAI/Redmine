@@ -179,16 +179,16 @@ def apply_status_format(ws, column_index):
             status_cell.fill = WARNING_FILL
 
 def apply_penalty_status_style(ws):
-    amount_col = 4
+    amount_col = 5
     apply_currency_format(ws, amount_col - 1)
 
-    status_col = 5
+    status_col = amount_col + 1
     apply_status_format(ws, status_col - 1)
 
 
 def apply_penalty_pending_style(ws):
-    amount_col = 4
+    amount_col = 5
     apply_currency_format(ws, amount_col - 1)
 
-    status_col = 5
+    status_col = amount_col + 1
     apply_status_format(ws, status_col - 1)

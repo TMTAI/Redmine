@@ -200,6 +200,7 @@ def generate_excel(
         [
             "Ngày",
             "Thành viên",
+            "Nguồn",
             "Vi phạm",
             "Tiền phạt",
             "Trạng thái",
@@ -216,6 +217,7 @@ def generate_excel(
         [
             "Ngày",
             "Thành viên",
+            "Nguồn",
             "Vi phạm",
             "Tiền phạt",
             "Trạng thái",
