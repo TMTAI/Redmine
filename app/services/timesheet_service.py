@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from app.services.dashboard_service import build_dashboard_rows
 from app.services.penalty_service import (build_penalty_rows, build_penalty_pending_rows, build_pending_penalty_summary)
 from app.services.dashboard_service import build_dashboard_rows
+from app.services.date_service import is_date_in_range
 
 def build_working_days(from_date, to_date, holidays):
     working_days = []
@@ -256,24 +257,35 @@ def build_summary_rows(
     summary_hours,
     summary_days,
     required_hours,
-    min_hours_per_day
+    min_hours_per_day,
+    missing_summary
 ):
     summary_rows = []
 
     for user in sorted(mapped_users):
+
+        missing_days = (
+            missing_summary
+            .get(user, {})
+            .get("days", 0)
+        )
+
+        missing_hours = (
+            missing_summary
+            .get(user, {})
+            .get("hours", 0)
+        )
+
         summary_rows.append([
             user,
-            len(
-                summary_days[user]
-            ),
-            round(
-                summary_hours[user],
-                2
-            ),
+            len(summary_days[user]),
+            round(summary_hours[user], 2),
             required_hours.get(
                 user,
                 min_hours_per_day
-            )
+            ),
+            missing_days,
+            round(missing_hours, 2)
         ])
 
     return summary_rows
@@ -487,14 +499,6 @@ def aggregate_entries(
         min_hours_per_day=min_hours_per_day
     )
 
-    summary_rows = build_summary_rows(
-        mapped_users=mapped_users,
-        summary_hours=summary_hours,
-        summary_days=summary_days,
-        required_hours=required_hours,
-        min_hours_per_day=min_hours_per_day
-    )
-
     (
         missing_summary,
         missing_summary_rows
@@ -503,10 +507,29 @@ def aggregate_entries(
         no_log_rows=no_log_rows
     )
 
+    summary_rows = build_summary_rows(
+        mapped_users=mapped_users,
+        summary_hours=summary_hours,
+        summary_days=summary_days,
+        required_hours=required_hours,
+        min_hours_per_day=min_hours_per_day,
+        missing_summary=missing_summary
+    )
+
+    late_logs_in_range = [
+        item
+        for item in late_logs
+        if is_date_in_range(
+            item["date"],
+            from_date,
+            to_date
+        )
+    ]
+
     penalty_rows = build_penalty_rows(
         under_hours_rows=under_hours_rows,
         no_log_rows=no_log_rows,
-        late_logs=late_logs,
+        late_logs=late_logs_in_range,
         penalty_rules=penalty_rules,
         penalty_payments=penalty_payments
     )
@@ -533,7 +556,7 @@ def aggregate_entries(
         summary_days=summary_days,
         no_log_rows=no_log_rows,
         under_hours_rows=under_hours_rows,
-        late_logs=late_logs,
+        late_logs=late_logs_in_range,
         penalty_pending_summary=penalty_pending_summary
     )
 
@@ -542,7 +565,6 @@ def aggregate_entries(
         "under_hours_rows": under_hours_rows,
         "no_log_rows": no_log_rows,
         "summary_rows": summary_rows,
-        "missing_summary_rows": missing_summary_rows,
         "dashboard_rows": dashboard_rows,
         "users_found": users_found,
         "working_days_count": working_days_count,
