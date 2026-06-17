@@ -335,26 +335,6 @@ def build_missing_summary(
         missing_summary_rows
     )
 
-def build_leave_summary(
-    mapped_users,
-    user_leaves
-):
-    leave_summary = {}
-
-    for user in mapped_users:
-        leave_summary[user] = 0
-
-    for (date, user), leave_hours in user_leaves.items():
-
-        if user not in leave_summary:
-            leave_summary[user] = 0
-
-        leave_summary[user] += (
-            leave_hours / 8
-        )
-
-    return leave_summary
-
 def build_over_hours_rows(
     user_hours,
     required_hours,
