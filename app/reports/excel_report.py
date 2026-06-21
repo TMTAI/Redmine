@@ -143,6 +143,18 @@ def generate_excel(
 
     create_sheet(
         wb,
+        "LEAVES",
+        [
+            "Date",
+            "User",
+            "Leave Hours",
+            "Leave Days"
+        ],
+        result["leave_rows"]
+    )
+
+    create_sheet(
+        wb,
         "MISSING_LOG",
         [
             "Date",

@@ -191,12 +191,18 @@ def build_under_hours_rows(
             base_required - leave_hours
         )
 
-        if required > 0 and total < required:
+        EPSILON = 0.01
+
+        total = round(total, 2)
+        required = round(required, 2)
+        missing = round(required - total, 2)
+
+        if required > 0 and missing > EPSILON:
             under_hours_rows.append([
                 date,
                 user,
-                round(total, 2),
-                round(required - total, 2),
+                total,
+                missing,
                 required
             ])
 
@@ -546,6 +552,12 @@ def aggregate_entries(
         penalty_pending_summary=penalty_pending_summary
     )
 
+    leave_rows = build_leave_rows(
+        user_leaves=user_leaves,
+        required_hours=required_hours,
+        min_hours_per_day=min_hours_per_day
+    )
+
     return {
         "detail_rows": detail_rows,
         "under_hours_rows": under_hours_rows,
@@ -558,6 +570,7 @@ def aggregate_entries(
         "penalty_rows": penalty_rows,
         "penalty_pending_rows": penalty_pending_rows,
         "missing_log_rows": missing_log_rows,
+        "leave_rows": leave_rows,
     }
 
 def build_missing_log_rows(
@@ -604,3 +617,33 @@ def build_missing_log_rows(
         row.pop()
 
     return missing_log_rows
+
+
+def build_leave_rows(
+    user_leaves,
+    required_hours,
+    min_hours_per_day
+):
+    leave_rows = []
+
+    for (date, user), leave_hours in sorted(
+        user_leaves.items()
+    ):
+        required = required_hours.get(
+            user,
+            min_hours_per_day
+        )
+
+        leave_days = 0
+
+        if required > 0:
+            leave_days = leave_hours / required
+
+        leave_rows.append([
+            date,
+            user,
+            round(leave_hours, 2),
+            round(leave_days, 2)
+        ])
+
+    return leave_rows

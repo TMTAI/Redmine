@@ -1,3 +1,21 @@
+from app.services.date_service import is_date_in_range
+
+
+def filter_user_leaves_by_date(
+    user_leaves,
+    from_date,
+    to_date
+):
+    return {
+        key: value
+        for key, value in user_leaves.items()
+        if is_date_in_range(
+            key[0],
+            from_date,
+            to_date
+        )
+    }
+
 def merge_user_leaves(
     base_leaves,
     extra_leaves,

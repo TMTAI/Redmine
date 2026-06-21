@@ -7,6 +7,7 @@ from app.services.leave_service import merge_user_leaves
 from app.loaders.penalty_loader import load_penalty_rules
 from app.loaders.late_loader import load_late_logs
 from app.loaders.penalty_payment_loader import load_penalty_payments
+from app.services.leave_service import filter_user_leaves_by_date
 
 from app.clients.redmine_client import (
     get_all_time_entries
@@ -103,6 +104,12 @@ def main():
         base_leaves=excel_leaves,
         extra_leaves=csv_leaves,
         required_hours=required_hours
+    )
+
+    user_leaves = filter_user_leaves_by_date(
+        user_leaves=user_leaves,
+        from_date=from_date,
+        to_date=to_date
     )
 
     print(f"CSV Leaves: {len(csv_leaves)}")
