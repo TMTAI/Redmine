@@ -487,6 +487,12 @@ def aggregate_entries(
         no_log_rows=no_log_rows
     )
 
+    missing_log_rows = build_missing_log_rows(
+        under_hours_rows=under_hours_rows,
+        no_log_rows=no_log_rows,
+        default_redmine=default_redmine
+    )
+
     summary_rows = build_summary_rows(
         mapped_users=mapped_users,
         summary_hours=summary_hours,
@@ -551,4 +557,50 @@ def aggregate_entries(
         "over_hours_rows": over_hours_rows,
         "penalty_rows": penalty_rows,
         "penalty_pending_rows": penalty_pending_rows,
+        "missing_log_rows": missing_log_rows,
     }
+
+def build_missing_log_rows(
+    under_hours_rows,
+    no_log_rows,
+    default_redmine
+):
+    missing_log_rows = []
+
+    for row in under_hours_rows:
+        missing_log_rows.append([
+            row[0],
+            row[1],
+            "",
+            row[2],
+            row[4],
+            row[3],
+            "",
+            1
+        ])
+
+    for row in no_log_rows:
+        missing_log_rows.append([
+        row[0],
+        row[1],
+        row[2],
+        0,
+        row[3],
+        row[3],
+        "X",
+        0
+    ])
+
+    missing_log_rows = sorted(
+        missing_log_rows,
+        key=lambda row: (
+            row[0],                     # Date
+            0 if row[7] == "NO_LOG" else 1,  # No Log trước
+            row[1]                      # User
+        )
+    )
+
+    for row in missing_log_rows:
+        row.pop()
+
+    return missing_log_rows

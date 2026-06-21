@@ -143,27 +143,17 @@ def generate_excel(
 
     create_sheet(
         wb,
-        "UNDER_HOURS",
-        [
-            "Date",
-            "User",
-            "Total Hours",
-            "Missing",
-            "Required Hours"
-        ],
-        result["under_hours_rows"]
-    )
-
-    create_sheet(
-        wb,
-        "NO_LOG",
+        "MISSING_LOG",
         [
             "Date",
             "User",
             "Redmine",
-            "Required Hours"
+            "Logged Hours",
+            "Required Hours",
+            "Missing Hours",
+            "No Log"
         ],
-        result["no_log_rows"]
+        result["missing_log_rows"]
     )
 
     create_sheet(
