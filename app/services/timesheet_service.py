@@ -6,6 +6,12 @@ from app.services.penalty_service import (build_penalty_rows, build_penalty_pend
 from app.services.dashboard_service import build_dashboard_rows
 from app.services.date_service import is_date_in_range
 
+from app.services.team_service import (
+    build_team_summary_rows,
+    build_team_productivity_rows,
+    build_team_project_rows
+)
+
 def build_working_days(from_date, to_date, holidays):
     working_days = []
 
@@ -410,6 +416,8 @@ def aggregate_entries(
     user_mapping,
     mapped_users,
     required_hours,
+    user_teams,
+    user_roles,
     holidays,
     user_leaves,
     late_logs,
@@ -558,6 +566,30 @@ def aggregate_entries(
         min_hours_per_day=min_hours_per_day
     )
 
+    team_summary_rows = build_team_summary_rows(
+        mapped_users=mapped_users,
+        user_teams=user_teams,
+        summary_hours=summary_hours,
+        summary_days=summary_days,
+        leave_summary=leave_summary,
+        missing_summary=missing_summary
+    )
+
+    team_productivity_rows = build_team_productivity_rows(
+        mapped_users=mapped_users,
+        user_teams=user_teams,
+        required_hours=required_hours,
+        summary_hours=summary_hours,
+        user_leaves=user_leaves,
+        working_days_count=working_days_count,
+        min_hours_per_day=min_hours_per_day
+    )
+
+    team_project_rows = build_team_project_rows(
+        detail_rows=detail_rows,
+        user_teams=user_teams
+    )
+
     return {
         "detail_rows": detail_rows,
         "under_hours_rows": under_hours_rows,
@@ -571,6 +603,9 @@ def aggregate_entries(
         "penalty_pending_rows": penalty_pending_rows,
         "missing_log_rows": missing_log_rows,
         "leave_rows": leave_rows,
+        "team_summary_rows": team_summary_rows,
+        "team_productivity_rows": team_productivity_rows,
+        "team_project_rows": team_project_rows
     }
 
 def build_missing_log_rows(

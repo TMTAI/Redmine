@@ -183,6 +183,45 @@ def generate_excel(
 
     create_sheet(
         wb,
+        "TEAM_SUMMARY",
+        [
+            "Team",
+            "Members",
+            "Logged Days",
+            "Total Hours",
+            "Leave Days",
+            "Missing Days",
+            "Missing Hours"
+        ],
+        result["team_summary_rows"]
+    )
+
+    create_sheet(
+        wb,
+        "TEAM_PRODUCTIVITY",
+        [
+            "Team",
+            "Expected Hours",
+            "Actual Hours",
+            "Leave Hours",
+            "Productivity %"
+        ],
+        result["team_productivity_rows"]
+    )
+
+    create_sheet(
+        wb,
+        "TEAM_PROJECT",
+        [
+            "Team",
+            "Project",
+            "Hours"
+        ],
+        result["team_project_rows"]
+    )
+
+    create_sheet(
+        wb,
         "DETAIL",
         [
             "Date",

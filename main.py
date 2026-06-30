@@ -25,6 +25,9 @@ from app.reports.excel_report import (
     generate_excel
 )
 
+from app.services.invalid_data_service import InvalidDataCollector
+
+invalid_data = InvalidDataCollector()
 
 def main():
 
@@ -69,8 +72,10 @@ def main():
     (
         user_mapping,
         mapped_users,
-        required_hours
-    ) = load_user_mapping()
+        required_hours,
+        user_teams,
+        user_roles
+    ) = load_user_mapping(invalid_data)
 
     print(
         f"Mapped Users: "
@@ -225,7 +230,9 @@ def main():
         min_hours_per_day=min_hours_per_day,
         from_date=from_date,
         to_date=to_date,
-        default_redmine=default_redmine
+        default_redmine=default_redmine,
+        user_teams=user_teams,
+        user_roles=user_roles,
     )
 
     print(
